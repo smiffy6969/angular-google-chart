@@ -84,6 +84,8 @@
                     chart: '=chart',
                     onReady: '&',
                     onSelect: '&',
+                    onDeselect: '&',
+                    onPage: '&',
                     select: '&'
                 },
                 link: function ($scope, $elm, $attrs) {
@@ -186,10 +188,19 @@
                                     };
 
                                     $scope.chartWrapper = new google.visualization.ChartWrapper(chartWrapperArgs);
-                                    google.visualization.events.addListener($scope.chartWrapper, 'ready', function () {
+                                    google.visualization.events.addListener($scope.chartWrapper, 'ready', function () 
+                                    {
                                         $scope.chart.displayed = true;
                                         $scope.$apply(function (scope) {
                                             scope.onReady({ chartWrapper: scope.chartWrapper });
+                                        });
+
+                                        // add in any page events after ready (due to issues with adding using chart wrapper)
+                                        google.visualization.events.addListener($scope.chartWrapper.getChart(), 'page', function(selected)
+                                        { 
+                                            $scope.$apply(function () {
+                                                $scope.onPage({ selectedPage: selected.page });
+                                            });
                                         });
                                     });
                                     google.visualization.events.addListener($scope.chartWrapper, 'error', function (err) {
@@ -197,16 +208,30 @@
                                         console.log(err);
                                     });
                                     google.visualization.events.addListener($scope.chartWrapper, 'select', function () {
-                                        var selectedItem = $scope.chartWrapper.getChart().getSelection()[0];
-                                        $scope.$apply(function () {
-                                            if ($attrs.select) {
-                                                console.log('Angular-Google-Chart: The \'select\' attribute is deprecated and will be removed in a future release.  Please use \'onSelect\'.');
-                                                $scope.select({ selectedItem: selectedItem });
-                                            }
-                                            else {
-                                                $scope.onSelect({ selectedItem: selectedItem });
-                                            }
-                                        });
+                                        var selection = $scope.chartWrapper.getChart().getSelection()[0];
+
+                                        if (!selection)
+                                        {
+                                            // deselect
+                                            $scope.$apply(function () {
+                                                $scope.onDeselect({ deselectedItem: $scope.selectedItem });
+                                            });
+                                        }
+                                        else
+                                        {
+                                            // select
+                                            $scope.selectedItem = selection;
+
+                                            $scope.$apply(function () {
+                                                if ($attrs.select) {
+                                                    console.log('Angular-Google-Chart: The \'select\' attribute is deprecated and will be removed in a future release.  Please use \'onSelect\'.');
+                                                    $scope.select({ selectedItem: $scope.selectedItem });
+                                                }
+                                                else {
+                                                    $scope.onSelect({ selectedItem: $scope.selectedItem });
+                                                }
+                                            });
+                                        }
                                     });
                                 }
                                 else {
