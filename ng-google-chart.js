@@ -84,6 +84,7 @@
                     chart: '=chart',
                     onReady: '&',
                     onSelect: '&',
+					onPage: '&',
                     select: '&'
                 },
                 link: function ($scope, $elm, $attrs) {
@@ -190,6 +191,14 @@
                                         $scope.chart.displayed = true;
                                         $scope.$apply(function (scope) {
                                             scope.onReady({ chartWrapper: scope.chartWrapper });
+                                        });
+
+                                        // add in any page events after ready (due to issues with adding using chart wrapper)
+                                        google.visualization.events.addListener($scope.chartWrapper.getChart(), 'page', function(selected)
+                                        { 
+                                            $scope.$apply(function () {
+                                                $scope.onPage({ selectedPage: selected.page });
+                                            });
                                         });
                                     });
                                     google.visualization.events.addListener($scope.chartWrapper, 'error', function (err) {
