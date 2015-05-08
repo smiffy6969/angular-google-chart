@@ -84,7 +84,6 @@
                     chart: '=chart',
                     onReady: '&',
                     onSelect: '&',
-                    onDeselect: '&',
 					onPage: '&',
                     select: '&'
                 },
@@ -207,22 +206,17 @@
                                         console.log(err);
                                     });
                                     google.visualization.events.addListener($scope.chartWrapper, 'select', function () {
-                                        var selection = $scope.chartWrapper.getChart().getSelection()[0];
-                                        $scope.selectedItem = selection || $scope.selectedItem;
-
-                                        $scope.$apply(function () 
-                                        {
-                                            // fire selection with or without selected item as per google chart
+                                        var selectEventRetParams = { selectedItems: $scope.chartWrapper.getChart().getSelection() };
+                                        // This is for backwards compatibility for people using 'selectedItem' that only wanted the first selection.
+                                        selectEventRetParams.selectedItem = selectEventRetParams.selectedItems[0];
+                                        $scope.$apply(function () {
                                             if ($attrs.select) {
                                                 console.log('Angular-Google-Chart: The \'select\' attribute is deprecated and will be removed in a future release.  Please use \'onSelect\'.');
-                                                $scope.select({ selectedItem: selection });
+                                                $scope.select(selectEventRetParams);
                                             }
                                             else {
-                                                $scope.onSelect({ selectedItem: selection });
+                                                $scope.onSelect(selectEventRetParams);
                                             }
-
-                                            // fire additional de-select event when item has been de-selected
-                                            if (!selection) $scope.onDeselect({ deselectedItem: $scope.selectedItem });
                                         });
                                     });
                                 }
